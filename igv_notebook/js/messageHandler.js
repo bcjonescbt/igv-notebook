@@ -225,7 +225,7 @@
                 // URL is relative to notebook
                 return encodeURI(`${location.origin}${baseURL}files/${notebookDir}${url}`)
             }
-        } else if (pageURL.includes("/lab/")) {
+        } else if (pageURL.includes("/lab")) {
             // Jupyter Lab
 
             // Examples
@@ -235,7 +235,7 @@
             // https://hub.gke2.mybinder.org/user/igvteam-igv-notebook-5ivkyktt/lab/tree/examples/BamFiles.ipynb
             //    => https://hub.gke2.mybinder.org/user/igvteam-igv-notebook-5ivkyktt/files/examples/data/gstt1_sample.bam
 
-            const baseIndex = pageURL.indexOf("/lab/")
+            const baseIndex = pageURL.indexOf("/lab")
             const baseURL = pageURL.substring(0, baseIndex)
 
             if (url.startsWith("/")) {
