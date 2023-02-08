@@ -61,13 +61,15 @@ class Browser(object):
         Create an igv.js "Browser" instance on the front end.
         Retain a DisplayHandle for later updates (e.g. to convert browser to SVG)
         """
-        self.d = display(HTML("""<div id="%s"></div>""" % (self.igv_id)), display_id=id)
+        display(HTML("""<div id="%s"></div>""" % (self.igv_id)))
 
-        self._send({
+        msg = {
             "id": self.igv_id,
             "command": "createBrowser",
             "data": config
-        })
+        }
+        javascript = """window.igv.MessageHandler.on(%s)""" % (json.dumps(msg))
+        self.d = display(Javascript(javascript), display_id=id)
 
     def load_track(self, config):
         """
@@ -162,7 +164,7 @@ class Browser(object):
     def _send(self, msg):
         javascript = """window.igv.MessageHandler.on(%s)""" % (json.dumps(msg))
         # print(javascript)
-        display(Javascript(javascript))
+        self.d.update(Javascript(javascript))
 
     def _gen_id(self):
         return 'jb_' + str(random.randint(1, 10000000))
