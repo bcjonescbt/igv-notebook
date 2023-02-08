@@ -25,7 +25,7 @@ class NavBox:
         self._slider.observe(self._slider_change, 'value')
 
         self._nav_dropdown = Dropdown(options=self._roi_key.name.values, description="Nav:", 
-                                      layout=Layout(width='30%', height='25px'))
+                                      index=init_roi_index, layout=Layout(width='30%', height='25px'))
         self._nav_dropdown.observe(self._nav_dropdown_change, 'value')
         
         self._roi_select = SelectMultiple(options=self._roi_key.name.values, value=(), description="ROIs")
@@ -87,7 +87,7 @@ class NavBox:
             for i in self._roi_select.index:
                 key = self._roi_key.iloc[i]
                 roi_list.append({'name': key['name'], 'url': key['path_igv'], 
-                                 'color': "rgba(" + ','.join([str(int(c*255)) for c in cmap.colors[-1-i]]) + ",0.25)"})
+                                 'color': "rgba(" + ','.join([str(int(c*255)) for c in cmap.colors[-1-i]]) + ",0.40)"})
             self._browser.load_roi(roi_list)
             
     def _button_press(self, b):
