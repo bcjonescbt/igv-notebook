@@ -64,7 +64,7 @@ class NavBox:
     def _slider_change(self, change):
         if change['type'] == 'change' and change['name'] == 'value':
             new_locus = f"chr{self._chr_dropdown.value}:{self._slider.value}"
-            print("Locus changed to %s" % new_locus)
+            #print("Locus changed to %s" % new_locus)
             self._browser.search(new_locus)
 
     def _chr_dropdown_change(self, change):
@@ -73,14 +73,14 @@ class NavBox:
             
     def _nav_dropdown_change(self, change):
         if change['type'] == 'change' and change['name'] == 'value':
-            print(f"New Nav ROI: {self._roi_key['path'][self._nav_dropdown.index]}")
+            #print(f"New Nav ROI: {self._roi_key['path'][self._nav_dropdown.index]}")
             self.set_nav_roi(pybedtools.BedTool(self._roi_key['path'][self._nav_dropdown.index]))
             
     def _roi_select_change(self, change):
         if change['type'] == 'change' and change['name'] == 'value':
             self._browser.clear_rois()
 
-            print(f"New ROIs: {self._roi_select.index}")
+            #print(f"New ROIs: {self._roi_select.index}")
             cmap = cm.get_cmap('Set3')
 
             roi_list = []
