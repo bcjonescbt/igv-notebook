@@ -117,7 +117,7 @@
                                 break
 
                             case "loadROI":
-                                if(Array.isArray(data)) {
+                                if (Array.isArray(data)) {
                                     data.map(convertTrackData)
                                 } else {
                                     convertTrackData(data)
@@ -226,6 +226,8 @@
                 return encodeURI(`${location.origin}${baseURL}files/${notebookDir}${url}`)
             }
         } else if (pageURL.includes("/lab")) {
+
+            console.log("Jupyter lab")
             // Jupyter Lab
 
             // Examples
