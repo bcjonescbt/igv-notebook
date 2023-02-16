@@ -25,7 +25,7 @@ class NavBox:
         self._slider.observe(self._slider_change, 'value')
 
         self._nav_dropdown = Dropdown(options=self._roi_key.name.values, description="Nav:", 
-                                      index=init_roi_index, layout=Layout(width='30%', height='25px'))
+                                      index=init_roi_index, layout=Layout(width='35%', height='25px'))
         self._nav_dropdown.observe(self._nav_dropdown_change, 'value')
         
         self._roi_select = SelectMultiple(options=self._roi_key.name.values, value=(), description="ROIs")
