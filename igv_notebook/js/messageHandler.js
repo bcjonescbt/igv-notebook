@@ -177,6 +177,8 @@
                                     customButtonDiv.appendChild(toSVGButton)
                                 }
 
+								customButtonDiv.remove()
+
                                 break
 
                             case "loadSession":
