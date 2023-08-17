@@ -32,6 +32,48 @@
 
     console.log("Installing IGVMessageHandler")
 
+    function convertUrlsAndPaths(session) {
+        if (session.reference) {
+            for (let pre of ["fasta", "index", "cytoband", "compressedIndex", "alias"]) {
+                convert(session.reference, pre)
+            }
+            if (session.reference.tracks) {
+                for (let t of session.reference.tracks) {
+                    convert(t)
+                    convert(t, "index")
+                    if (!t.indexURL) {
+                        t.indexed = false
+                    }
+                }
+            }
+        }
+
+        if (session.tracks) {
+            for (let t of session.tracks) {
+                convert(t)
+                convert(t, "index")
+                if (!t.indexURL) {
+                    t.indexed = false
+                }
+            }
+        }
+    }
+
+    /**
+     * Return true if the sessionJson object contains only absolute URLs to resources
+     */
+    function safeToWeblink(sessionJson) {
+        const unsafe = (url) => typeof url.startsWith != 'function' || !url.startsWith("http")
+        if (sessionJson.reference) {
+            if (unsafe(sessionJson.reference.fastaURL)) return false
+        }
+        if (sessionJson.tracks) {
+            const urls = sessionJson.tracks.filter(t => t.url).map(t => t.url)
+            if (urls.some(unsafe)) return false
+        }
+        return true
+    }
+
     class MessageHandler {
 
         constructor() {
@@ -68,47 +110,78 @@
 
                                 const container = document.getElementById(browserID)  // <= created from python
 
+                                // custom button bar
+                                const customButtonDiv = document.createElement('div')
+                                customButtonDiv.style = `background: #f3f3f3;padding: 5px;border-color: #bfbfbf;border-style: solid;border-width: thin;border-radius: 3px;`
+                                container.appendChild(customButtonDiv)
+
                                 data.sync = true
-
-                                if (isNotebook) {
-                                    const toSVGButton = {
-                                        label: "To SVG",
-                                        callback: (browser) => {
-                                            const locus = browser.referenceFrameList.map(rf => rf.getLocusString()).join(' ')
-                                            const svg = browser.toSVG()
-                                            toSVG(browserID, locus, svg)
-                                        }
-                                    }
-                                    data.customButtons = [toSVGButton]
-                                }
-
-                                if (data.reference) {
-                                    for (let pre of ["fasta", "index", "cytoband", "compressedIndex", "alias"]) {
-                                        convert(data.reference, pre)
-                                    }
-                                    if (data.reference.tracks) {
-                                        for (let t of data.reference.tracks) {
-                                            convert(t)
-                                            convert(t, "index")
-                                            if (!t.indexURL) {
-                                                t.indexed = false
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (data.tracks) {
-                                    for (let t of data.tracks) {
-                                        convert(t)
-                                        convert(t, "index")
-                                        if (!t.indexURL) {
-                                            t.indexed = false
-                                        }
-                                    }
-                                }
+                                convertUrlsAndPaths(data)
 
                                 const newBrowser = await igv.createBrowser(container, data)
                                 this.browserCache.set(browserID, newBrowser)
+
+                                // Add igv-notebook button bar
+                                const toJsonButton = document.createElement('button')
+                                toJsonButton.innerText = "Save Session"
+                                toJsonButton.style = "margin-right:5px"
+                                toJsonButton.addEventListener('click', (evt) => {
+                                    let fn
+                                    if (isNotebook) {
+                                        fn = prompt("Filename:", "session.json")
+                                    } else {
+                                        fn = "session.json"
+                                    }
+                                    if (fn) {
+                                        const json = newBrowser.toJSON()
+                                        const jsonString = JSON.stringify(json, null, '\t')
+                                        download(fn, jsonString)
+                                    }
+                                })
+                                customButtonDiv.appendChild(toJsonButton)
+
+                                const webLinkNode = document.createElement('a')
+                                webLinkNode.target = "igvWeb"
+                                webLinkNode.innerText = "Link to IGV-Web"
+                                webLinkNode.style.display = "none"
+
+                                const shareButton = document.createElement('button')
+                                shareButton.innerText = "Show IGV-Web Link"
+                                shareButton.style = "margin-right:5px"
+                                shareButton.addEventListener('click', async (evt) => {
+
+                                    if (safeToWeblink(newBrowser.toJSON())) {
+                                        const sessionURL = `https://igv.org/app?sessionURL=blob:${newBrowser.compressedSession()}`
+                                        const shortURL = await shortenURL(sessionURL)
+                                        webLinkNode.innerText = "Link to IGV-Web"
+                                        webLinkNode.setAttribute("href", shortURL)
+                                        webLinkNode.style.display = "inline-block"
+                                        shareButton.innerText = "Update IGV-Web Link"
+                                    } else {
+                                        webLinkNode.innerText = "Cannot link -- non URL resources used"
+                                        webLinkNode.style.display = "inline-block"
+                                    }
+                                })
+                                customButtonDiv.appendChild(shareButton)
+                                customButtonDiv.appendChild(webLinkNode)
+
+                                if (isNotebook) {
+                                    const toSVGButton = document.createElement('button')
+                                    toSVGButton.innerText = "To SVG"
+                                    toSVGButton.style = "float:right"
+                                    toSVGButton.addEventListener('click', (evt) => {
+                                        const locus = newBrowser.referenceFrameList.map(rf => rf.getLocusString()).join(' ')
+                                        const svg = newBrowser.toSVG()
+                                        toSVG(browserID, locus, svg)
+                                    })
+                                    customButtonDiv.appendChild(toSVGButton)
+                                }
+
+                                break
+
+                            case "loadSession":
+                                convertUrlsAndPaths(data)
+                                browser.loadSessionObject(data)
                                 break
 
                             case "loadTrack":
@@ -263,10 +336,10 @@
     function convert(config, prefix) {
         const urlProp = prefix ? prefix + "URL" : "url"
         const pathProp = prefix ? prefix + "Path" : "path"
-        if (config[urlProp]) {
-            config[urlProp] = convertURL(config[urlProp])
-        } else if (config[pathProp]) {
+        if (config[pathProp]) {
             config[urlProp] = createNotebookFile(config[pathProp])
+        } else if (config[urlProp]) {
+            config[urlProp] = convertURL(config[urlProp])
         }
     }
 
@@ -298,6 +371,29 @@
     }
 
     window.igv.MessageHandler = new MessageHandler()
+
+    function download(filename, text) {
+
+        const data = URL.createObjectURL(new Blob([text], {type: "application/octet-stream"}))
+        const element = document.createElement('a')
+        element.setAttribute('href', data)
+        element.setAttribute('download', filename)
+        element.style.display = 'none'
+        document.body.appendChild(element)
+        element.click()
+        document.body.removeChild(element)
+    }
+
+    async function shortenURL(url) {
+        const endpoint = "https://2et6uxfezb.execute-api.us-east-1.amazonaws.com/dev/tinyurl/"
+        const enc = encodeURIComponent(url)
+        const response = await fetch(`${endpoint}${enc}`)
+        if (response.ok) {
+            return response.text()
+        } else {
+            throw new Error(response.statusText)
+        }
+    }
 
     console.log("igv.MessageHandler installed")
 

@@ -328,6 +328,19 @@ python setup.py build
 
 ## Release Notes
 
+**0.5.2**
+
+* Bug fix -- igv undefined
+
+**0.5.1**
+
+* Update igv.js version to 2.15.7
+
+**0.5.0**
+
+* Add support for loading an igv session
+* Generate links to igv-web
+
 **0.4.5**
 
 * Fix path/url problems when using JupyterLab
