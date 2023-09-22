@@ -19,6 +19,8 @@ class NavBox:
         self._chr_dropdown = Dropdown(options=self._get_chr_list(), description="Chr:", value='1',
                                       layout=Layout(width='20%', height='25px'))
         self._chr_dropdown.observe(self._chr_dropdown_change, 'value')
+        self._chr_dropdown.options=self._get_chr_list()
+        self._chr_dropdown.value=self._chr_dropdown.options[0]
         
         self._slider = SelectionSlider(options=self._get_slider_ranges(), continuous_update=False,
                                       layout=Layout(width='70%', height='30px'))
@@ -57,8 +59,6 @@ class NavBox:
         if self._chrome_size_dict:
             self._roi = self._roi.slop(genome=self._chrome_size_dict, b=self.ROI_BUFFER_BP)
             
-        self._chr_dropdown.options=self._get_chr_list()
-        self._chr_dropdown.value=self._chr_dropdown.options[0]
         self._slider.options = self._get_slider_ranges()
 
     def _slider_change(self, change):
